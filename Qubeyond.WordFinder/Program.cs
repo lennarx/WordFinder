@@ -4,10 +4,18 @@ using Qubeyond.WordFinder;
 
 var matrix = new List<string>
 {
-    { "Caverna" },
-    { "Taberna" },
-    { "Palerma" },
-    { "Alarmas" }
+    { "adsgadsgadsfgadfghsfdghdfgjwh" },
+    { "asdgsdfhdfgnfghmghkjmsdfhdfoh" },
+    { "dfgasdgasdgasdfgsdfgsdfgsdfrg" },
+    { "aasdfgsdfhgdfghdfgjtukjiuyodi" },
+    { "gsgsdfghdfyhnmyimopopsdfhbdig" },
+    { "adgsdfhgsfhjuhoujoijgoijijfsf" },
+    { "uieooauiehjdlpukllusiueoekkfn" },
+    { "afjdglksjgiumabmiuuiasiouroro" },
+    { "bombastickhjalsjkdhgkjanrojgn" },
+    { "klajskljdfyeyunomkladjgklsdjf" },
+    { "kljsadflkhjsdflkhjhorafdagsdf" },
+    { "lknjolijouinlbjinlkuixhjouaae" }
 
 };
 
@@ -15,13 +23,13 @@ var wordFinder = new WordFinder(matrix);
 
 var wordsToSearch = new List<string>
 {
-    { "Alarma" },
-    { "Jaja" },
-    { "Caverna" },
-    { "Alarma" },
-    { "AJC" }
+    { "bombastic" },
+    { "hora" },
+    { "gmh" },
+    { "frgjda" },
+    { "bmiuu" }
 };
 
-var wordsFound = await wordFinder.Find(wordsToSearch);
+var wordsFound = wordFinder.Find(wordsToSearch);
 
 Console.WriteLine(wordsFound);

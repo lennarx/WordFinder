@@ -8,6 +8,6 @@ namespace Qubeyond.WordFinder
 {
     public interface IWordFinder
     {
-        Task<IEnumerable<string>> Find(IEnumerable<string> wordstream);
+        IEnumerable<string> Find(IEnumerable<string> wordstream);
     }
 }

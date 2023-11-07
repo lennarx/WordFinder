@@ -1,4 +1,8 @@
-﻿namespace Qubeyond.WordFinder
+﻿using System.Collections.Concurrent;
+using System.Text;
+using System.Text.RegularExpressions;
+
+namespace Qubeyond.WordFinder
 {
     public class WordFinder : IWordFinder
     {
@@ -6,55 +10,46 @@
         public WordFinder(IEnumerable<string> matrix)
         {
             ValidateMatrix(matrix);
-            _wordMatrix = matrix;
+            _wordMatrix = matrix.Select(x => x.ToLower());
         }
 
-        public async Task<IEnumerable<string>> Find(IEnumerable<string> wordStream)
+        public IEnumerable<string> Find(IEnumerable<string> wordStream)
         {
-            var foundWordsTasks = wordStream.Distinct().Select(word => WordIsContainedInMatrix(word));
+            var foundWords = new ConcurrentBag<string>();
 
-            await Task.WhenAll(foundWordsTasks);
-
-            return foundWordsTasks.Select(x => x.Result); 
-        }
-
-        private async Task<string> WordIsContainedInMatrix(string word)
-        {
-            var wordFoundInRowTask = SearchWordInRow(word, _wordMatrix);
-            var wordFoundInColTask = SearchWordInCol(word);
-
-            await Task.WhenAll(wordFoundInColTask, wordFoundInRowTask);
-
-            return wordFoundInColTask.Result ?? wordFoundInRowTask.Result;
-        }
-
-        private async Task<string> SearchWordInCol(string word)
-        {
-            var charColumns = _wordMatrix.Select(x => x.ToList()).ToList();
-
-            var stringColumns = charColumns.Select(x => x.ToString()!);
-
-            return await SearchWordInRow(word, stringColumns);
-
-            //for (int colIndex = 0; colIndex < columns.Count; colIndex++)
-            //{
-            //    foreach (var column in columns)
-            //    {
-            //        if (column[colIndex].ToString().Contains(word))
-            //        {
-            //            return word;
-            //        }
-            //    }
-            //}
-        }
-
-        private async Task<string> SearchWordInRow(string word, IEnumerable<string> wordRows)
-        {
-            if(await Task.Run(() => wordRows.Any(x => x.Contains(word))))
+            Parallel.ForEach(wordStream.Distinct(), word =>
             {
-                return word;
-            }
-            return null;
+                if (!string.IsNullOrEmpty(WordIsContainedInMatrix(word)))
+                {
+                    foundWords.Add(word);
+                }
+            });
+
+            return foundWords.ToList();
+        }
+
+        private string WordIsContainedInMatrix(string word)
+        {
+            var wordFoundInRow = SearchWordInRow(word, _wordMatrix);
+            var wordFoundInCol = SearchWordInCol(word);
+
+            return wordFoundInCol ?? wordFoundInRow;
+        }
+
+        private string SearchWordInCol(string word)
+        {
+            var columnWords = new ConcurrentBag<string>();
+            Parallel.For(0, _wordMatrix.First().Length,
+                   index => {
+                       var columnWord = new string(_wordMatrix.Select(x => x[index]).ToArray());
+                       columnWords.Add(columnWord);
+                   });
+            return SearchWordInRow(word, columnWords);
+        }
+
+        private string SearchWordInRow(string word, IEnumerable<string> wordRows)
+        {
+            return wordRows.Any(x => x.Contains(word)) ? word : null;
         }
 
         private void ValidateMatrix(IEnumerable<string> matrix)
@@ -69,11 +64,21 @@
                 throw new Exception("Provided rows exceeds the limit of 64 rows");
             }
 
+            if(matrix.Any(x => StringContainsNonLetterCharacters(x))) 
+            {
+                throw new Exception("One of the provided words contains one or more non letter character");
+            }
+
             if (matrix.Any(x => x.Length > 64 || matrix.First().Length != x.Length))
             {
                 throw new Exception("Rows contained in matrix do not have the same length");
             }
 
+        }
+
+        private bool StringContainsNonLetterCharacters(string word)
+        {
+            return !Regex.IsMatch(word, @"^[a-zA-Z]+$");
         }
     }
 }
