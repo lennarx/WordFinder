@@ -1,4 +1,6 @@
-﻿using System.Collections.Concurrent;
+﻿using Qubeyond.WordFinder.Extensions;
+using Qubeyond.WordFinder.Validators;
+using System.Collections.Concurrent;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -17,7 +19,7 @@ namespace Qubeyond.WordFinder
         {
             var foundWords = new ConcurrentBag<string>();
 
-            Parallel.ForEach(wordStream.Distinct(), word =>
+            Parallel.ForEach(wordStream.Distinct().Select(x => x.ToLower()), word =>
             {
                 if (!string.IsNullOrEmpty(WordIsContainedInMatrix(word)))
                 {
@@ -54,31 +56,12 @@ namespace Qubeyond.WordFinder
 
         private void ValidateMatrix(IEnumerable<string> matrix)
         {
-            if (!matrix.Any())
+            var validator = new MatrixValidator();
+            var validationResult = validator.Validate(matrix);
+            if (!validationResult.IsValid)
             {
-                throw new Exception("Provided matrix is empty");
+                throw new Exception(validationResult.ConcatErrors());
             }
-
-            if (matrix.Count() > 64)
-            {
-                throw new Exception("Provided rows exceeds the limit of 64 rows");
-            }
-
-            if(matrix.Any(x => StringContainsNonLetterCharacters(x))) 
-            {
-                throw new Exception("One of the provided words contains one or more non letter character");
-            }
-
-            if (matrix.Any(x => x.Length > 64 || matrix.First().Length != x.Length))
-            {
-                throw new Exception("Rows contained in matrix do not have the same length");
-            }
-
-        }
-
-        private bool StringContainsNonLetterCharacters(string word)
-        {
-            return !Regex.IsMatch(word, @"^[a-zA-Z]+$");
         }
     }
 }
