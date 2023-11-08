@@ -18,7 +18,7 @@ namespace Qubeyond.WordFinder
         public IEnumerable<string> Find(IEnumerable<string> wordStream)
         {
             var foundWords = new ConcurrentBag<string>();
-
+            //Decided to execute a parallel foreach in order to search for all the words in parallel at the same time
             Parallel.ForEach(wordStream.Distinct().Select(x => x.ToLower()), word =>
             {
                 if (!string.IsNullOrEmpty(WordIsContainedInMatrix(word)))
@@ -41,6 +41,9 @@ namespace Qubeyond.WordFinder
         private string SearchWordInCol(string word)
         {
             var columnWords = new ConcurrentBag<string>();
+
+            //In this approach, I decided to afford the trade-off of iterate all the colunmns, but doing it at the same time for the sake of the performance.
+            //I could have iterated the matrix sequencially and stop the loop as soon as it found the word, but if the word is not found, it would have been very expensive.
             Parallel.For(0, _wordMatrix.First().Length,
                    index => {
                        var columnWord = new string(_wordMatrix.Select(x => x[index]).ToArray());
